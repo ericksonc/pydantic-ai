@@ -25,38 +25,38 @@ This fork of Pydantic AI is a **workspace for analyzing and understanding the Py
 
 ### For Claude Code Mobile (iOS)
 
-When you create or update reports:
+**Mobile's git restrictions** (Anthropic-imposed):
+- Cannot push to `main` directly (HTTP 403 error)
+- Must push to session-specific branches under `claude/*`
+- Branch names are auto-generated per conversation/session
 
-1. **Edit files** in the `claude/` directory
-2. **Commit changes** with a descriptive message
-3. **Push directly to main**:
-   ```bash
-   git add claude/
-   git commit -m "Add/update report: [description]"
-   git push origin main
-   ```
-
-**Important**: Work directly on `main` branch. No need to create feature branches for simple markdown sync.
+**What Mobile should do:**
+1. **Analyze code** and create reports in `claude/` directory
+2. **Commit changes** with descriptive messages
+3. **Push to your branch** (whatever Anthropic allows - typically `claude/*`)
+4. **Done!** Desktop will merge it
 
 ### For Claude Code Desktop (Mac)
 
-To sync reports from Mobile:
+**To sync Mobile's analysis reports:**
 
-**Option 1: Use the sync script (recommended)**
 ```bash
-./sync-mobile-reports.sh
+./merge-mobile.sh
 ```
 
-**Option 2: Manual pull**
-```bash
-git pull origin main
-```
+This script will:
+- Find all Mobile branches (anything under `origin/claude/*`)
+- Merge the most recent one to `main`
+- Push to fork
+- Optionally delete the Mobile branch (cleanup)
 
-The sync script will:
-- Fetch latest changes from the fork
-- Check for updates in `claude/` directory
-- Pull changes automatically if found
-- Display sync status
+**Alternative - manual process:**
+```bash
+git fetch origin
+git checkout main
+git merge origin/claude/[branch-name]
+git push origin main
+```
 
 ## File Organization
 
@@ -78,19 +78,20 @@ claude/
 
 **Sync Flow:**
 ```
-Mobile: Analyzes code → Creates report → Commits & pushes to main
-                                            ↓
-                            GitHub Fork (ericksonc/pydantic-ai)
-                                            ↓
-Desktop: Runs ./sync-mobile-reports.sh → Pulls reports → Can continue analysis
+Mobile: Analyzes code → Creates report → Commits & pushes to claude/* branch
+                                                ↓
+                                GitHub Fork (ericksonc/pydantic-ai)
+                                                ↓
+Desktop: Runs ./merge-mobile.sh → Merges to main → Can continue analysis
 ```
 
 ## Important Notes
 
-- **Both instances work on `main`**: No branching needed for markdown sync
+- **Mobile creates branches**: Anthropic restricts Mobile to `claude/*` branches (can't push to `main`)
+- **Desktop merges**: Use `./merge-mobile.sh` to consolidate Mobile's work into `main`
 - **Conflicts are rare**: Mobile and Desktop typically work on different files
-- **If conflicts occur**: Desktop should pull first, resolve manually, then push
-- **The sync script is idempotent**: Safe to run multiple times
+- **If conflicts occur**: Desktop resolves during merge, then pushes
+- **Branch cleanup**: Delete Mobile branches after merging (script will prompt)
 - **Original CLAUDE.md**: See `CLAUDE-original.md` for Pydantic AI development instructions
 
 ## Reference Links
